@@ -1,0 +1,43 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "qadam-app",
+          "appId": "1:500896448263:android:350c12cb273c93f2268fa2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "qadam-app",
+          "configurations": {
+            "android": "1:500896448263:android:350c12cb273c93f2268fa2",
+            "ios": "1:500896448263:ios:57487a7b1e0cdf4e268fa2",
+            "web": "1:500896448263:web:8a78ebcb8b343f04268fa2"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
