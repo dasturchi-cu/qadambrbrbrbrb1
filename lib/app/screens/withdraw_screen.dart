@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/withdraw_service.dart';
 import '../services/coin_service.dart';
-import '../services/auth_service.dart';
 
 class WithdrawScreen extends StatefulWidget {
   const WithdrawScreen({Key? key}) : super(key: key);
@@ -16,7 +15,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   final _amountController = TextEditingController();
   final _cardNumberController = TextEditingController();
   final _phoneController = TextEditingController();
-  
+
   String _selectedMethod = 'card';
   bool _isLoading = false;
 
@@ -32,7 +31,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   Widget build(BuildContext context) {
     final coinService = Provider.of<CoinService>(context);
     final withdrawService = Provider.of<WithdrawService>(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -52,23 +51,23 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               // Balance Card
               _buildBalanceCard(coinService.coins),
               const SizedBox(height: 24),
-              
+
               // Amount Input
               _buildAmountInput(),
               const SizedBox(height: 24),
-              
+
               // Payment Method Selection
               _buildPaymentMethodSelection(),
               const SizedBox(height: 24),
-              
+
               // Payment Details
               _buildPaymentDetails(),
               const SizedBox(height: 32),
-              
+
               // Withdraw Button
               _buildWithdrawButton(withdrawService, coinService),
               const SizedBox(height: 24),
-              
+
               // Withdraw History
               _buildWithdrawHistory(withdrawService),
             ],
@@ -216,7 +215,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  Widget _buildMethodCard(String method, String title, IconData icon, bool isSelected) {
+  Widget _buildMethodCard(
+      String method, String title, IconData icon, bool isSelected) {
     return GestureDetector(
       onTap: () => setState(() => _selectedMethod = method),
       child: Container(
@@ -224,7 +224,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.white,
           border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.withValues(alpha: 0.3),
+            color:
+                isSelected ? Colors.blue : Colors.grey.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -312,12 +313,15 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  Widget _buildWithdrawButton(WithdrawService withdrawService, CoinService coinService) {
+  Widget _buildWithdrawButton(
+      WithdrawService withdrawService, CoinService coinService) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _isLoading ? null : () => _handleWithdraw(withdrawService, coinService),
+        onPressed: _isLoading
+            ? null
+            : () => _handleWithdraw(withdrawService, coinService),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
@@ -368,9 +372,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  Future<void> _handleWithdraw(WithdrawService withdrawService, CoinService coinService) async {
+  Future<void> _handleWithdraw(
+      WithdrawService withdrawService, CoinService coinService) async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final amount = int.parse(_amountController.text);
     if (amount > coinService.coins) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -380,7 +385,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     }
 
     setState(() => _isLoading = true);
-    
+
     final success = await withdrawService.requestWithdraw(
       amount: amount,
       method: _selectedMethod,

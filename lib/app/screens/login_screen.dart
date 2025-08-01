@@ -138,7 +138,8 @@ class _LoginScreenState extends State<LoginScreen>
                     opacity: _fadeAnimation,
                     child: SlideTransition(
                       position: _slideAnimation,
-                      child: _buildContent(context, authService, size, colorScheme),
+                      child: _buildContent(
+                          context, authService, size, colorScheme),
                     ),
                   );
                 },
@@ -151,11 +152,11 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildContent(
-      BuildContext context,
-      AuthService authService,
-      Size size,
-      ColorScheme colorScheme,
-      ) {
+    BuildContext context,
+    AuthService authService,
+    Size size,
+    ColorScheme colorScheme,
+  ) {
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: size.width > 600 ? 400 : size.width,
@@ -309,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen>
               ],
             ),
           ),
-          Icon(
+          const Icon(
             Icons.verified,
             color: Colors.green,
             size: 20,
@@ -336,7 +337,8 @@ class _LoginScreenState extends State<LoginScreen>
               if (value == null || value.isEmpty) {
                 return 'Email manzilni kiriting';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
                 return 'To\'g\'ri email manzil kiriting';
               }
               return null;
@@ -486,7 +488,8 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.8),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       validator: validator,
     );
@@ -512,22 +515,22 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         child: isLoading
             ? SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).colorScheme.onPrimary,
-            ),
-          ),
-        )
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              )
             : Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
@@ -585,7 +588,8 @@ class _LoginScreenState extends State<LoginScreen>
           height: 24,
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
+              image: NetworkImage(
+                  'https://developers.google.com/identity/images/g-logo.png'),
               fit: BoxFit.contain,
             ),
           ),
@@ -633,7 +637,8 @@ class _LoginScreenState extends State<LoginScreen>
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     RegisterScreen(referralCode: widget.referralCode),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   return SlideTransition(
                     position: animation.drive(
                       Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
@@ -671,7 +676,7 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             color: Colors.red,
             size: 20,
@@ -707,7 +712,7 @@ class _LoginScreenState extends State<LoginScreen>
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-          const HomeScreen(),
+              const HomeScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -729,7 +734,7 @@ class _LoginScreenState extends State<LoginScreen>
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-          const HomeScreen(),
+              const HomeScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

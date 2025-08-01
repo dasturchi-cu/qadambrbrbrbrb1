@@ -26,6 +26,15 @@ import 'package:qadam_app/app/services/support_service.dart';
 import 'package:qadam_app/app/services/achievement_service.dart';
 import 'package:qadam_app/app/services/shop_service.dart';
 import 'package:qadam_app/app/services/withdraw_service.dart';
+import 'package:qadam_app/app/services/notification_service.dart';
+import 'package:qadam_app/app/services/level_service.dart';
+import 'package:qadam_app/app/services/friends_service.dart';
+import 'package:qadam_app/app/services/theme_service.dart';
+import 'package:qadam_app/app/services/localization_service.dart';
+import 'package:qadam_app/app/services/connectivity_service.dart';
+import 'package:qadam_app/app/services/sync_service.dart';
+import 'package:qadam_app/app/services/offline_game_service.dart';
+import 'package:qadam_app/app/utils/firebase_setup.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -39,7 +48,7 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('Handling a background message: ${message.messageId}');
+  debugPrint('Handling a background message: ${message.messageId}');
 }
 
 Future<void> setupFlutterNotifications() async {
@@ -72,6 +81,9 @@ void main() async {
   // AdMob ni initialize qilish
   MobileAds.instance.initialize();
 
+  // Firebase Collections ni initialize qilish
+  await FirebaseSetup.initializeFirebaseCollections();
+
   runApp(
     MultiProvider(
       providers: [
@@ -89,7 +101,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SupportService()),
         ChangeNotifierProvider(create: (_) => ShopService()),
         ChangeNotifierProvider(create: (_) => WithdrawService()),
-        // Takrorlangan providerlar olib tashlandi
+        ChangeNotifierProvider(create: (_) => NotificationService()),
+        ChangeNotifierProvider(create: (_) => LevelService()),
+        ChangeNotifierProvider(create: (_) => FriendsService()),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => LocalizationService()),
+        ChangeNotifierProvider(create: (_) => ConnectivityService()),
+        ChangeNotifierProvider(create: (_) => SyncService()),
+        ChangeNotifierProvider(create: (_) => OfflineGameService()),
       ],
       child: const QadamApp(),
     ),
@@ -149,16 +168,41 @@ class _QadamAppState extends State<QadamApp> {
     final authService = Provider.of<AuthService>(context);
     final settingsService = Provider.of<SettingsService>(context);
 
-    // CoinService va AchievementService initialize qilish
+    // Servicelarni initialize qilish
     if (authService.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final coinService = Provider.of<CoinService>(context, listen: false);
         final achievementService =
             Provider.of<AchievementService>(context, listen: false);
+        final levelService = Provider.of<LevelService>(context, listen: false);
+        final notificationService =
+            Provider.of<NotificationService>(context, listen: false);
+        final friendsService =
+            Provider.of<FriendsService>(context, listen: false);
+        final themeService = Provider.of<ThemeService>(context, listen: false);
+        final localizationService =
+            Provider.of<LocalizationService>(context, listen: false);
+        final connectivityService =
+            Provider.of<ConnectivityService>(context, listen: false);
+        final syncService = Provider.of<SyncService>(context, listen: false);
+        final offlineGameService =
+            Provider.of<OfflineGameService>(context, listen: false);
+        final rankingService =
+            Provider.of<RankingService>(context, listen: false);
 
+        // Servicelarni initialize qilish
         coinService.initialize();
         coinService.checkDailyLoginBonus();
         achievementService.initialize();
+        levelService.initialize();
+        notificationService.initialize();
+        friendsService.initialize();
+        themeService.initialize();
+        localizationService.initialize();
+        connectivityService.initialize();
+        syncService.initialize();
+        offlineGameService.initialize();
+        rankingService.initialize();
       });
     }
 

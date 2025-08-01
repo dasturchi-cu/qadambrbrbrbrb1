@@ -53,7 +53,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: Container(
@@ -636,7 +636,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Icon(Icons.monetization_on, size: 16, color: Colors.orange),
+                    const Icon(Icons.monetization_on,
+                        size: 16, color: Colors.orange),
                     const SizedBox(width: 4),
                     Text(
                       'Tanga: $coins',

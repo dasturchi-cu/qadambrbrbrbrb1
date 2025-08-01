@@ -527,15 +527,15 @@ class _LoginStreakScreenState extends State<LoginStreakScreen>
                   width: 1,
                 ),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
                     color: Color(0xFF667EEA),
                     size: 32,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Qanday ishlaydi?',
                     style: TextStyle(
                       fontSize: 18,
@@ -543,8 +543,8 @@ class _LoginStreakScreenState extends State<LoginStreakScreen>
                       color: Color(0xFF2D3748),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Har kuni ilovaga kirib, tanga yutib oling! 7-kunlik streak yakunlaganingizda bonus mukofot olasiz. Har hafta mukofotlar yana ham ko\'payib boradi.',
                     textAlign: TextAlign.center,
                     style: TextStyle(

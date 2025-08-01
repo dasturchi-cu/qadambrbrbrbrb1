@@ -17,7 +17,7 @@ class CoinWalletScreen extends StatefulWidget {
 class _CoinWalletScreenState extends State<CoinWalletScreen> {
   final TextEditingController _amountController = TextEditingController();
   RewardedAd? _rewardedAd;
-  bool _isRewardedAdLoading = false;
+  final bool _isRewardedAdLoading = false;
 
   @override
   void dispose() {
@@ -346,22 +346,22 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Tangalarni yechish'),
+          title: const Text('Tangalarni yechish'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Joriy balans: ${coinService.coins} tanga'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // To'lov usuli
                 DropdownButtonFormField<String>(
                   value: selectedMethod,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'To\'lov usuli',
                     border: OutlineInputBorder(),
                   ),
-                  items: [
+                  items: const [
                     DropdownMenuItem(value: 'click', child: Text('Click')),
                     DropdownMenuItem(value: 'payme', child: Text('Payme')),
                     DropdownMenuItem(value: 'uzcard', child: Text('UzCard')),
@@ -372,42 +372,42 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
                     });
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 // Miqdor
                 TextField(
                   controller: amountController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Miqdor (minimal: 1000)',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 // Karta raqami
                 TextField(
                   controller: cardController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Karta raqami',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 // Telefon
                 TextField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Telefon raqami',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-                Text(
+                const Text(
                   'To\'lov kartasi yoki telefon raqamini kiriting',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
@@ -417,7 +417,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Bekor qilish'),
+              child: const Text('Bekor qilish'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -425,7 +425,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
 
                 if (amount < 1000) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Minimal miqdor 1000 tanga')),
+                    const SnackBar(content: Text('Minimal miqdor 1000 tanga')),
                   );
                   return;
                 }
@@ -433,7 +433,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
                 if (cardController.text.isEmpty &&
                     phoneController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                         content: Text('Karta yoki telefon raqamini kiriting')),
                   );
                   return;
@@ -452,7 +452,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
 
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Yechish so\'rovi yuborildi!'),
                       backgroundColor: Colors.green,
                     ),
@@ -468,7 +468,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
                   );
                 }
               },
-              child: Text('Yuborish'),
+              child: const Text('Yuborish'),
             ),
           ],
         ),
@@ -479,7 +479,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
   void _loadRewardedAd(BuildContext context) {
     RewardedAd.load(
       adUnitId: 'ca-app-pub-7180097986291909/1830667352',
-      request: AdRequest(),
+      request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _rewardedAd = ad;
@@ -487,7 +487,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
         },
         onAdFailedToLoad: (error) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Reklama yuklanmadi')),
+            const SnackBar(content: Text('Reklama yuklanmadi')),
           );
         },
       ),
@@ -511,7 +511,7 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
       onUserEarnedReward: (ad, reward) async {
         await coinService.addCoins(15);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tabriklaymiz! +15 tanga oldingiz!')),
+          const SnackBar(content: Text('Tabriklaymiz! +15 tanga oldingiz!')),
         );
       },
     );

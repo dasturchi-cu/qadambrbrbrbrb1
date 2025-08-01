@@ -21,7 +21,7 @@ class _NewSupportScreenState extends State<NewSupportScreen> {
   String _selectedCategory = 'texnik_muammo';
   String _selectedPriority = 'past';
   bool _isLoading = false;
-  List<File> _attachedImages = [];
+  final List<File> _attachedImages = [];
 
   final List<Map<String, String>> _categories = [
     {'value': 'texnik_muammo', 'label': 'Texnik muammo'},

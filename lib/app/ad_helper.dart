@@ -7,7 +7,7 @@ class AdHelper {
     } else if (Platform.isIOS) {
       return 'ca-app-pub-7180097986291909/8025536468'; // Haqiqiy Banner ID
     } else {
-      throw new UnsupportedError('Unsupported platform');
+      throw UnsupportedError('Unsupported platform');
     }
   }
 
@@ -17,7 +17,7 @@ class AdHelper {
     } else if (Platform.isIOS) {
       return "ca-app-pub-6135925976729797/9497923905"; // Haqiqiy Interstitial ID
     } else {
-      throw new UnsupportedError("Unsupported platform");
+      throw UnsupportedError("Unsupported platform");
     }
   }
 
@@ -27,7 +27,7 @@ class AdHelper {
     } else if (Platform.isIOS) {
       return "ca-app-pub-6135925976729797/9497923905"; // Haqiqiy Rewarded ID
     } else {
-      throw new UnsupportedError("Unsupported platform");
+      throw UnsupportedError("Unsupported platform");
     }
   }
 }

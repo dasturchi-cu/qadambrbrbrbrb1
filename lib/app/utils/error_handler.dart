@@ -7,7 +7,7 @@ class ErrorHandler {
       print('Error: $error');
       print('StackTrace: $stackTrace');
     }
-    
+
     // Firebase Crashlytics'ga yuborish (keyinchalik)
     // FirebaseCrashlytics.instance.recordError(error, stackTrace);
   }
@@ -24,9 +24,9 @@ class ErrorHandler {
               color: Colors.red,
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Xatolik yuz berdi',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

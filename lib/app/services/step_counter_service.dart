@@ -3,6 +3,7 @@ import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'ranking_service.dart';
 
 class StepCounterService extends ChangeNotifier {
   int _steps = 0;
@@ -98,6 +99,7 @@ class StepCounterService extends ChangeNotifier {
     _saveSteps();
     syncStepsWithFirestore();
     await _updateAllChallengeProgress();
+    await _updateRankings();
     notifyListeners();
   }
 
@@ -112,7 +114,18 @@ class StepCounterService extends ChangeNotifier {
     _steps += count;
     _saveSteps();
     syncStepsWithFirestore();
+    _updateRankings();
     notifyListeners();
+  }
+
+  /// Update rankings when steps change
+  Future<void> _updateRankings() async {
+    try {
+      final rankingService = RankingService();
+      await rankingService.updateUserSteps(_steps);
+    } catch (e) {
+      debugPrint('Error updating rankings: $e');
+    }
   }
 
   void resetSteps() {

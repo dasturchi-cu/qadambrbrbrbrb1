@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../models/user_model.dart';
-import '../models/achievement_model.dart'; // Bu import qo'shildi
-import 'package:qadam_app/app/components/loading_widget.dart';
+// Bu import qo'shildi
 import 'package:qadam_app/app/services/coin_service.dart';
 import 'package:intl/intl.dart';
 

@@ -4,6 +4,8 @@ import '../services/shop_service.dart';
 import '../services/coin_service.dart';
 
 class ShopScreen extends StatefulWidget {
+  const ShopScreen({super.key});
+
   @override
   _ShopScreenState createState() => _ShopScreenState();
 }
@@ -31,20 +33,20 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Do\'kon'),
+        title: const Text('Do\'kon'),
         backgroundColor: Colors.blue,
         actions: [
           Consumer<CoinService>(
             builder: (context, coinService, child) {
               return Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.monetization_on, color: Colors.yellow),
-                    SizedBox(width: 4),
+                    const Icon(Icons.monetization_on, color: Colors.yellow),
+                    const SizedBox(width: 4),
                     Text(
                       '${coinService.coins}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -59,7 +61,7 @@ class _ShopScreenState extends State<ShopScreen> {
       body: Consumer<ShopService>(
         builder: (context, shopService, child) {
           if (shopService.isLoading) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (shopService.error != null) {
@@ -70,7 +72,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   Text('Xatolik: ${shopService.error}'),
                   ElevatedButton(
                     onPressed: () => shopService.fetchShopItems(),
-                    child: Text('Qayta urinish'),
+                    child: const Text('Qayta urinish'),
                   ),
                 ],
               ),
@@ -78,14 +80,14 @@ class _ShopScreenState extends State<ShopScreen> {
           }
 
           if (shopService.items.isEmpty) {
-            return Center(
+            return const Center(
               child: Text('Hozircha mahsulotlar yo\'q'),
             );
           }
 
           return GridView.builder(
-            padding: EdgeInsets.all(16),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 0.65, // Bu qiymatni kichikroq qiling
               crossAxisSpacing: 12,
@@ -115,14 +117,15 @@ class _ShopScreenState extends State<ShopScreen> {
               Expanded(
                 flex: 3,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(8)),
                   child: Image.network(
                     item.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: Colors.grey[300],
-                        child: Icon(Icons.image_not_supported),
+                        child: const Icon(Icons.image_not_supported),
                       );
                     },
                   ),
@@ -131,32 +134,32 @@ class _ShopScreenState extends State<ShopScreen> {
               Expanded(
                 flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(Icons.monetization_on,
+                          const Icon(Icons.monetization_on,
                               color: Colors.yellow, size: 14),
-                          SizedBox(width: 2),
+                          const SizedBox(width: 2),
                           Text(
                             '${item.cost}',
-                            style: TextStyle(fontSize: 12),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
-                      Spacer(),
+                      const Spacer(),
                       SizedBox(
                         width: double.infinity,
                         height: 28,
@@ -166,11 +169,11 @@ class _ShopScreenState extends State<ShopScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 canAfford ? Colors.blue : Colors.grey,
-                            padding: EdgeInsets.symmetric(vertical: 2),
+                            padding: const EdgeInsets.symmetric(vertical: 2),
                           ),
                           child: Text(
                             canAfford ? 'Sotib olish' : 'Yetarli emas',
-                            style: TextStyle(fontSize: 9),
+                            style: const TextStyle(fontSize: 9),
                           ),
                         ),
                       ),
@@ -191,12 +194,12 @@ class _ShopScreenState extends State<ShopScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Sotib olish'),
+        title: const Text('Sotib olish'),
         content: Text('${item.name} ni ${item.cost} tangaga sotib olasizmi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Bekor qilish'),
+            child: const Text('Bekor qilish'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -236,7 +239,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 }
               }
             },
-            child: Text('Sotib olish'),
+            child: const Text('Sotib olish'),
           ),
         ],
       ),
@@ -268,16 +271,17 @@ class _ShopScreenState extends State<ShopScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('AirPods sotib olish'),
-        content: Text('AirPods ni $airPodsPrice tanga evaziga sotib olasizmi?'),
+        title: const Text('AirPods sotib olish'),
+        content: const Text(
+            'AirPods ni $airPodsPrice tanga evaziga sotib olasizmi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Yo\'q'),
+            child: const Text('Yo\'q'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Ha, sotib olaman'),
+            child: const Text('Ha, sotib olaman'),
           ),
         ],
       ),
@@ -291,7 +295,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('🎧 AirPods muvaffaqiyatli sotib olindi!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
@@ -299,7 +303,7 @@ class _ShopScreenState extends State<ShopScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Xatolik yuz berdi. Qayta urinib ko\'ring.'),
             backgroundColor: Colors.red,
           ),

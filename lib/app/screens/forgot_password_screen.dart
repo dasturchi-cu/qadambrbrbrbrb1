@@ -24,9 +24,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -48,7 +48,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Success message
-                if (_isSuccess) 
+                if (_isSuccess)
                   Container(
                     padding: const EdgeInsets.all(15),
                     margin: const EdgeInsets.only(bottom: 20),
@@ -56,17 +56,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Column(
+                    child: const Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.check_circle,
                           color: Colors.green,
                           size: 50,
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         Text(
                           'Parolni tiklash bo\'yicha ko\'rsatmalar emailingizga yuborildi',
-                          style: const TextStyle(color: Colors.green),
+                          style: TextStyle(color: Colors.green),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -79,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Email field
                   TextFormField(
                     controller: _emailController,
@@ -101,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       return null;
                     },
                   ),
-                  
+
                   // Error message
                   if (authService.errorMessage != null) ...[
                     const SizedBox(height: 15),
@@ -110,45 +110,46 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                   ],
                 ],
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Reset button
                 SizedBox(
                   height: 50,
                   child: _isSuccess
-                    ? ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text(
-                          'Kirish oynasiga qaytish',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      )
-                    : ElevatedButton(
-                        onPressed: authService.isLoading
-                            ? null
-                            : () async {
-                                if (_formKey.currentState!.validate()) {
-                                  final success = await authService.resetPassword(
-                                    _emailController.text.trim(),
-                                  );
-                                  
-                                  if (success && mounted) {
-                                    setState(() {
-                                      _isSuccess = true;
-                                    });
+                      ? ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text(
+                            'Kirish oynasiga qaytish',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: authService.isLoading
+                              ? null
+                              : () async {
+                                  if (_formKey.currentState!.validate()) {
+                                    final success =
+                                        await authService.resetPassword(
+                                      _emailController.text.trim(),
+                                    );
+
+                                    if (success && mounted) {
+                                      setState(() {
+                                        _isSuccess = true;
+                                      });
+                                    }
                                   }
-                                }
-                              },
-                        child: authService.isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                'Parolni tiklash',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
+                                },
+                          child: authService.isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  'Parolni tiklash',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                        ),
                 ),
               ],
             ),
@@ -157,4 +158,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-} 
+}

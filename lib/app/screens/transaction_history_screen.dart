@@ -60,10 +60,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red),
-                      SizedBox(height: 16),
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
                       Text('Xatolik: ${transactionService.error}'),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
                           final user =
@@ -73,7 +74,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             transactionService.fetchTransactions(user.uid);
                           }
                         },
-                        child: Text('Qayta urinish'),
+                        child: const Text('Qayta urinish'),
                       ),
                     ],
                   ),
@@ -83,15 +84,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.receipt_long,
+                          const Icon(Icons.receipt_long,
                               size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
                             'Tranzaksiyalar topilmadi',
                             style: TextStyle(
                                 fontSize: 18, color: Colors.grey[600]),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Qadam tashlang va tanga yig\'ing!',
                             style: TextStyle(color: Colors.grey[500]),

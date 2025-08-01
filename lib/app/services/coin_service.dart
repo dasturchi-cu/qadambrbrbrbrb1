@@ -15,7 +15,8 @@ class CoinService extends ChangeNotifier {
   DateTime? _lastLoginDate;
   int? _lastBonusAmount;
   DateTime? _lastBonusDate;
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs;
+  bool _isInitialized = false;
   bool _showBonusSnackbar = false;
   final List<AchievementModel> _achievements = [];
 
@@ -34,6 +35,7 @@ class CoinService extends ChangeNotifier {
 
   Future<void> _initPrefs() async {
     _prefs = await SharedPreferences.getInstance();
+    _isInitialized = true;
     await _loadCoins();
     await _loadAchievements();
     await _checkForDailyReset();
@@ -41,10 +43,11 @@ class CoinService extends ChangeNotifier {
   }
 
   Future<void> _loadCoins() async {
-    _coins = _prefs.getInt('coins') ?? 0;
-    _todayEarned = _prefs.getInt('todayEarned') ?? 0;
-    _heldCoins = _prefs.getInt('heldCoins') ?? 0;
-    final lastResetString = _prefs.getString('coinLastResetDate');
+    if (_prefs == null) return;
+    _coins = _prefs!.getInt('coins') ?? 0;
+    _todayEarned = _prefs!.getInt('todayEarned') ?? 0;
+    _heldCoins = _prefs!.getInt('heldCoins') ?? 0;
+    final lastResetString = _prefs!.getString('coinLastResetDate');
     if (lastResetString != null) {
       _lastResetDate = DateTime.parse(lastResetString);
     }
@@ -52,7 +55,8 @@ class CoinService extends ChangeNotifier {
   }
 
   Future<void> _loadAchievements() async {
-    final achievementsString = _prefs.getString('achievements');
+    if (_prefs == null) return;
+    final achievementsString = _prefs!.getString('achievements');
     if (achievementsString != null) {
       final List decoded = jsonDecode(achievementsString);
       _achievements.clear();
@@ -63,22 +67,25 @@ class CoinService extends ChangeNotifier {
   }
 
   Future<void> _saveCoins() async {
-    await _prefs.setInt('coins', _coins);
-    await _prefs.setInt('todayEarned', _todayEarned);
-    await _prefs.setString(
-        'coinLastResetDate', DateTime.now().toIso8601String());
+    if (_prefs == null) return;
+    await _prefs!.setInt('coins', _coins);
+    await _prefs!.setInt('todayEarned', _todayEarned);
+    await _prefs!
+        .setString('coinLastResetDate', DateTime.now().toIso8601String());
   }
 
   Future<void> _saveAchievements() async {
+    if (_prefs == null) return;
     final encoded = jsonEncode(_achievements.map((e) => e.toMap()).toList());
-    await _prefs.setString('achievements', encoded);
+    await _prefs!.setString('achievements', encoded);
   }
 
   Future<void> _checkForDailyReset() async {
+    if (_prefs == null) return;
     if (_lastResetDate == null) {
       _lastResetDate = DateTime.now();
-      await _prefs.setString(
-          'coinLastResetDate', _lastResetDate!.toIso8601String());
+      await _prefs!
+          .setString('coinLastResetDate', _lastResetDate!.toIso8601String());
       return;
     }
 
@@ -100,8 +107,9 @@ class CoinService extends ChangeNotifier {
   }
 
   Future<void> _checkDailyLoginBonus() async {
+    if (_prefs == null) return;
     final now = DateTime.now();
-    final lastLoginString = _prefs.getString('lastLoginDate');
+    final lastLoginString = _prefs!.getString('lastLoginDate');
     if (lastLoginString != null) {
       _lastLoginDate = DateTime.parse(lastLoginString);
     }
@@ -119,8 +127,8 @@ class CoinService extends ChangeNotifier {
       _lastBonusAmount = bonus;
       _lastBonusDate = now;
       _showBonusSnackbar = true;
-      await _prefs.setInt('coins', _coins);
-      await _prefs.setString('lastLoginDate', now.toIso8601String());
+      await _prefs!.setInt('coins', _coins);
+      await _prefs!.setString('lastLoginDate', now.toIso8601String());
       _lastLoginDate = now;
       notifyListeners();
     }
@@ -269,15 +277,17 @@ class CoinService extends ChangeNotifier {
 
   // Set steps per coin ratio
   Future<void> setStepsPerCoin(int steps) async {
+    if (_prefs == null) return;
     _stepsPerCoin = steps;
-    await _prefs.setInt('stepsPerCoin', steps);
+    await _prefs!.setInt('stepsPerCoin', steps);
     notifyListeners();
   }
 
   // Set daily coin limit
   Future<void> setDailyCoinLimit(int limit) async {
+    if (_prefs == null) return;
     _dailyCoinLimit = limit;
-    await _prefs.setInt('dailyCoinLimit', limit);
+    await _prefs!.setInt('dailyCoinLimit', limit);
     notifyListeners();
   }
 
@@ -293,6 +303,7 @@ class CoinService extends ChangeNotifier {
 
   // Public method to check daily login bonus
   Future<void> checkDailyLoginBonus() async {
+    if (!_isInitialized) return;
     await _checkDailyLoginBonus();
   }
 
@@ -337,28 +348,31 @@ class CoinService extends ChangeNotifier {
 
   // Hold coins for later use
   Future<bool> holdCoins(int amount) async {
+    if (_prefs == null) return false;
     if (availableCoins < amount) return false;
 
     _heldCoins += amount;
-    await _prefs.setInt('heldCoins', _heldCoins);
+    await _prefs!.setInt('heldCoins', _heldCoins);
     notifyListeners();
     return true;
   }
 
   // Release held coins back to available balance
   Future<bool> releaseHeldCoins(int amount) async {
+    if (_prefs == null) return false;
     if (_heldCoins < amount) return false;
 
     _heldCoins -= amount;
-    await _prefs.setInt('heldCoins', _heldCoins);
+    await _prefs!.setInt('heldCoins', _heldCoins);
     notifyListeners();
     return true;
   }
 
   // Release all held coins
   Future<void> releaseAllHeldCoins() async {
+    if (_prefs == null) return;
     _heldCoins = 0;
-    await _prefs.setInt('heldCoins', 0);
+    await _prefs!.setInt('heldCoins', 0);
     notifyListeners();
   }
 
@@ -378,7 +392,8 @@ class CoinService extends ChangeNotifier {
 
   // Persist local challenge claim state
   Future<void> saveLocalChallengeState(List challenges) async {
-    final localStates = _prefs.getString('localChallengeStates');
+    if (_prefs == null) return;
+    final localStates = _prefs!.getString('localChallengeStates');
     Map<String, dynamic> stateMap = {};
     if (localStates != null) {
       stateMap = jsonDecode(localStates);
@@ -395,11 +410,12 @@ class CoinService extends ChangeNotifier {
         };
       }
     }
-    await _prefs.setString('localChallengeStates', jsonEncode(stateMap));
+    await _prefs!.setString('localChallengeStates', jsonEncode(stateMap));
   }
 
   Future<void> loadLocalChallengeState(List challenges) async {
-    final localStates = _prefs.getString('localChallengeStates');
+    if (_prefs == null) return;
+    final localStates = _prefs!.getString('localChallengeStates');
     if (localStates != null) {
       final stateMap = jsonDecode(localStates);
       for (var c in challenges) {

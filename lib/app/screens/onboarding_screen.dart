@@ -20,19 +20,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.initState();
     _pages = [
       OnboardingPage(
-        title: 'Qadam sanang',
-        description: 'Har bir qadamingizni kuzating va sog\'liq darajangizni oshiring',
+        title: 'Qadam Tashlang!',
+        description:
+            'Har bir qadamingiz uchun tanga yig\'ing va mukofotlarga ega bo\'ling',
         icon: Icons.directions_walk,
+        color: Colors.blue,
       ),
       OnboardingPage(
-        title: 'Tanga yig\'ing',
-        description: 'Qadamlaringiz uchun tangalar oling va turli sovg\'alar yutib oling',
-        icon: Icons.monetization_on,
+        title: 'Vazifalarni Bajaring',
+        description:
+            'Kunlik va haftalik vazifalarni bajarib qo\'shimcha tangalar yig\'ing',
+        icon: Icons.emoji_events,
+        color: Colors.green,
       ),
       OnboardingPage(
-        title: 'Do\'stlaringizni taklif qiling',
-        description: 'Referal havolangizni ulashing va qo\'shimcha tangalar yig\'ing',
-        icon: Icons.people,
+        title: 'Do\'stlar bilan Raqobatlashing',
+        description:
+            'Reytingda yuqori o\'rinlarga chiqing va do\'stlaringiz bilan raqobatlashing',
+        icon: Icons.leaderboard,
+        color: Colors.orange,
+      ),
+      OnboardingPage(
+        title: 'Pul Yechib Oling',
+        description:
+            'Yig\'gan tangalaringizni haqiqiy pulga aylantiring va bank kartangizga o\'tkazing',
+        icon: Icons.account_balance_wallet,
+        color: Colors.purple,
       ),
     ];
   }
@@ -46,7 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -84,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Page indicator
                   Row(
                     children: List.generate(
@@ -92,7 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       (index) => _buildDot(index: index),
                     ),
                   ),
-                  
+
                   // Next or Done button
                   ElevatedButton(
                     onPressed: () {
@@ -113,7 +126,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       padding: const EdgeInsets.all(15),
                     ),
                     child: Icon(
-                      _currentPage != _numPages - 1 ? Icons.arrow_forward : Icons.check,
+                      _currentPage != _numPages - 1
+                          ? Icons.arrow_forward
+                          : Icons.check,
                       color: Colors.white,
                     ),
                   ),
@@ -182,10 +197,12 @@ class OnboardingPage {
   final String title;
   final String description;
   final IconData icon;
+  final Color color;
 
   OnboardingPage({
     required this.title,
     required this.description,
     required this.icon,
+    required this.color,
   });
-} 
+}

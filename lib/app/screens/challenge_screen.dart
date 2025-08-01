@@ -70,7 +70,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final stepService = Provider.of<StepCounterService>(context);
     final challengeService = Provider.of<ChallengeService>(context);
 
     // Faqat mukofoti olinmagan challengelarni ko'rsatish
@@ -87,7 +86,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         challengeService.challenges.where((c) => c.rewardClaimed).toList();
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: Container(
@@ -111,7 +110,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           child: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Text(
+            title: const Text(
               'Challenge\'lar',
               style: TextStyle(
                 color: Colors.white,
@@ -251,7 +250,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                   const SizedBox(width: 4),
                                   Container(
                                     padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
+                                    decoration: const BoxDecoration(
                                       color: Colors.green,
                                       shape: BoxShape.circle,
                                     ),

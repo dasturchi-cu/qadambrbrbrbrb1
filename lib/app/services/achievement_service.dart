@@ -150,14 +150,18 @@ class AchievementService extends ChangeNotifier {
           .where('userId', isEqualTo: user.uid)
           .get();
 
-      _unlockedAchievements = query.docs.map((doc) => doc.data()['achievementId'] as String).toList();
+      _unlockedAchievements = query.docs
+          .map((doc) => doc.data()['achievementId'] as String)
+          .toList();
 
       // Update achievements with unlocked status
       for (int i = 0; i < _achievements.length; i++) {
         if (_unlockedAchievements.contains(_achievements[i].id)) {
-          final docData = query.docs.firstWhere(
+          final docData = query.docs
+              .firstWhere(
                 (doc) => doc.data()['achievementId'] == _achievements[i].id,
-          ).data();
+              )
+              .data();
 
           _achievements[i] = Achievement(
             id: _achievements[i].id,
@@ -201,19 +205,24 @@ class AchievementService extends ChangeNotifier {
 
       switch (achievement.type) {
         case 'steps':
-          shouldUnlock = totalSteps != null && totalSteps >= achievement.requiredValue;
+          shouldUnlock =
+              totalSteps != null && totalSteps >= achievement.requiredValue;
           break;
         case 'coins':
-          shouldUnlock = totalCoins != null && totalCoins >= achievement.requiredValue;
+          shouldUnlock =
+              totalCoins != null && totalCoins >= achievement.requiredValue;
           break;
         case 'daily_streak':
-          shouldUnlock = dailyStreak != null && dailyStreak >= achievement.requiredValue;
+          shouldUnlock =
+              dailyStreak != null && dailyStreak >= achievement.requiredValue;
           break;
         case 'challenges':
-          shouldUnlock = completedChallenges != null && completedChallenges >= achievement.requiredValue;
+          shouldUnlock = completedChallenges != null &&
+              completedChallenges >= achievement.requiredValue;
           break;
         case 'referrals':
-          shouldUnlock = referralCount != null && referralCount >= achievement.requiredValue;
+          shouldUnlock = referralCount != null &&
+              referralCount >= achievement.requiredValue;
           break;
       }
 
@@ -259,7 +268,6 @@ class AchievementService extends ChangeNotifier {
           'coins': currentCoins + achievement.reward,
         });
       }
-
     } catch (e) {
       print('Achievement unlock qilishda xatolik: $e');
     }
@@ -270,12 +278,14 @@ class AchievementService extends ChangeNotifier {
     // This would typically show a popup or notification
     // For now, we'll just print to console
     for (Achievement achievement in achievements) {
-      print('Achievement unlocked: ${achievement.title} - ${achievement.reward} coins');
+      print(
+          'Achievement unlocked: ${achievement.title} - ${achievement.reward} coins');
     }
   }
 
   // Get achievement progress
-  double getAchievementProgress(Achievement achievement, {
+  double getAchievementProgress(
+    Achievement achievement, {
     int? totalSteps,
     int? totalCoins,
     int? dailyStreak,
@@ -309,7 +319,9 @@ class AchievementService extends ChangeNotifier {
 
   // Get achievements by category
   List<Achievement> getAchievementsByType(String type) {
-    return _achievements.where((achievement) => achievement.type == type).toList();
+    return _achievements
+        .where((achievement) => achievement.type == type)
+        .toList();
   }
 
   // Get unlocked achievements count

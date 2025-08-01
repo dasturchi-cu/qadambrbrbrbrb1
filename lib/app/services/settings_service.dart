@@ -55,7 +55,8 @@ class SettingsService with ChangeNotifier {
     _darkModeEnabled = _prefs!.getBool(_darkModeKey) ?? false;
 
     // Theme mode ni yuklash
-    final themeModeIndex = _prefs!.getInt(_themeModeKey) ?? ThemeMode.system.index;
+    final themeModeIndex =
+        _prefs!.getInt(_themeModeKey) ?? ThemeMode.system.index;
     _themeMode = ThemeMode.values[themeModeIndex];
 
     // Locale ni yuklash
@@ -203,10 +204,5 @@ class SettingsService with ChangeNotifier {
       'locale': _localeToString(_locale),
       'isInitialized': _isInitialized,
     };
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

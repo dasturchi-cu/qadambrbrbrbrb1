@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'dart:math';
 import 'package:qadam_app/app/models/challenge_model.dart';
 
 class ChallengeService extends ChangeNotifier {
@@ -20,34 +22,144 @@ class ChallengeService extends ChangeNotifier {
     try {
       final user = FirebaseAuth.instance.currentUser;
 
-      // Base challenges
+      // Real challenges - Professional level
       List<ChallengeModel> baseChallenges = [
+        // Daily Challenges
         ChallengeModel(
-          id: '1',
-          title: '1000 qadam',
-          description: 'Bugun 1000 qadam yuring',
+          id: 'daily_1000',
+          title: '🚶 Boshlang\'ich qadam',
+          description: 'Bugun 1,000 qadam yuring va sog\'lom hayotni boshlang!',
           targetSteps: 1000,
-          reward: 10,
+          reward: 15,
           duration: 1,
           type: 'daily',
         ),
         ChallengeModel(
-          id: '2',
-          title: '5000 qadam',
-          description: 'Bugun 5000 qadam yuring',
+          id: 'daily_3000',
+          title: '🏃 Faol yurish',
+          description: 'Bugun 3,000 qadam yuring va energiya to\'plang!',
+          targetSteps: 3000,
+          reward: 35,
+          duration: 1,
+          type: 'daily',
+        ),
+        ChallengeModel(
+          id: 'daily_5000',
+          title: '💪 Kuchli qadam',
+          description:
+              'Bugun 5,000 qadam yuring va o\'zingizni yaxshi his qiling!',
           targetSteps: 5000,
-          reward: 50,
+          reward: 60,
           duration: 1,
           type: 'daily',
         ),
         ChallengeModel(
-          id: '3',
-          title: 'Haftalik 30000 qadam',
-          description: 'Bu hafta 30000 qadam yuring',
-          targetSteps: 30000,
+          id: 'daily_8000',
+          title: '🔥 Yonuvchan qadam',
+          description: 'Bugun 8,000 qadam yuring va kalori yoqing!',
+          targetSteps: 8000,
+          reward: 100,
+          duration: 1,
+          type: 'daily',
+        ),
+        ChallengeModel(
+          id: 'daily_10000',
+          title: '🏆 Oltin qadam',
+          description: 'Bugun 10,000 qadam yuring va champion bo\'ling!',
+          targetSteps: 10000,
+          reward: 150,
+          duration: 1,
+          type: 'daily',
+        ),
+
+        // Weekly Challenges
+        ChallengeModel(
+          id: 'weekly_20000',
+          title: '📅 Haftalik boshlang\'ich',
+          description:
+              'Bu hafta 20,000 qadam yuring va doimiylikni o\'rganing!',
+          targetSteps: 20000,
           reward: 200,
           duration: 7,
           type: 'weekly',
+        ),
+        ChallengeModel(
+          id: 'weekly_50000',
+          title: '🎯 Haftalik maqsad',
+          description:
+              'Bu hafta 50,000 qadam yuring va o\'zingizni sinab ko\'ring!',
+          targetSteps: 50000,
+          reward: 400,
+          duration: 7,
+          type: 'weekly',
+        ),
+        ChallengeModel(
+          id: 'weekly_70000',
+          title: '🚀 Haftalik raketa',
+          description: 'Bu hafta 70,000 qadam yuring va yangi rekord qo\'ying!',
+          targetSteps: 70000,
+          reward: 600,
+          duration: 7,
+          type: 'weekly',
+        ),
+
+        // Monthly Challenges
+        ChallengeModel(
+          id: 'monthly_200000',
+          title: '🌟 Oylik yulduz',
+          description: 'Bu oy 200,000 qadam yuring va yulduz bo\'ling!',
+          targetSteps: 200000,
+          reward: 1000,
+          duration: 30,
+          type: 'monthly',
+        ),
+        ChallengeModel(
+          id: 'monthly_300000',
+          title: '👑 Oylik qirol',
+          description:
+              'Bu oy 300,000 qadam yuring va qirol unvonini qo\'lga kiriting!',
+          targetSteps: 300000,
+          reward: 1500,
+          duration: 30,
+          type: 'monthly',
+        ),
+
+        // Special Challenges
+        ChallengeModel(
+          id: 'special_streak_7',
+          title: '🔥 7 kunlik olov',
+          description: 'Ketma-ket 7 kun har kuni 5000+ qadam yuring!',
+          targetSteps: 35000,
+          reward: 500,
+          duration: 7,
+          type: 'streak',
+        ),
+        ChallengeModel(
+          id: 'special_weekend',
+          title: '🎉 Dam olish kunlari',
+          description: 'Shanba va yakshanba kunlari 8000+ qadam yuring!',
+          targetSteps: 16000,
+          reward: 300,
+          duration: 2,
+          type: 'weekend',
+        ),
+        ChallengeModel(
+          id: 'special_morning',
+          title: '🌅 Erta turuvchi',
+          description: 'Ertalab soat 8 gacha 3000 qadam yuring!',
+          targetSteps: 3000,
+          reward: 200,
+          duration: 1,
+          type: 'morning',
+        ),
+        ChallengeModel(
+          id: 'special_evening',
+          title: '🌙 Kechqurun yuruvchi',
+          description: 'Kechqurun soat 18 dan keyin 5000 qadam yuring!',
+          targetSteps: 5000,
+          reward: 250,
+          duration: 1,
+          type: 'evening',
         ),
       ];
 
@@ -185,9 +297,9 @@ class ChallengeService extends ChangeNotifier {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Challenge reward claimed: $reward coins');
-      print('👤 User: $userName ($userEmail)');
-      print(
+      debugPrint('✅ Challenge reward claimed: $reward coins');
+      debugPrint('👤 User: $userName ($userEmail)');
+      debugPrint(
           '🎯 Challenge: ${_challenges.firstWhere((c) => c.id == challengeId).title}');
     } catch (e) {
       debugPrint('Error claiming reward: $e');
@@ -214,7 +326,7 @@ class ChallengeService extends ChangeNotifier {
         .where('userId', isEqualTo: user.uid)
         .snapshots()
         .listen((snapshot) {
-      print(
+      debugPrint(
           '🔄 Challenge ma\'lumotlari yangilandi: ${snapshot.docs.length} ta challenge');
       fetchChallenges(); // Ma'lumotlarni qayta yuklash
     });
