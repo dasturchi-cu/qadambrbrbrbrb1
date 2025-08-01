@@ -20,7 +20,18 @@ class _CoinWalletScreenState extends State<CoinWalletScreen> {
   final bool _isRewardedAdLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Start real-time coin updates when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CoinService>().startRealTimeUpdates();
+    });
+  }
+
+  @override
   void dispose() {
+    // Stop real-time updates when leaving screen
+    context.read<CoinService>().stopRealTimeUpdates();
     _amountController.dispose();
     super.dispose();
   }

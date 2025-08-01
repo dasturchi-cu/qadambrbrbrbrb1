@@ -15,11 +15,12 @@ class ConnectivityService extends ChangeNotifier {
   ConnectivityService._internal();
 
   final Connectivity _connectivity = Connectivity();
-  final InternetConnectionChecker _internetChecker = InternetConnectionChecker();
-  
+  final InternetConnectionChecker _internetChecker =
+      InternetConnectionChecker();
+
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   StreamSubscription<InternetConnectionStatus>? _internetSubscription;
-  
+
   ConnectionStatus _connectionStatus = ConnectionStatus.checking;
   ConnectivityResult _connectivityResult = ConnectivityResult.none;
   bool _hasInternetAccess = false;
@@ -35,32 +36,46 @@ class ConnectivityService extends ChangeNotifier {
   bool get hasInternetAccess => _hasInternetAccess;
   DateTime? get lastOnlineTime => _lastOnlineTime;
   Duration get offlineDuration => _offlineDuration;
-  
+
   // Connection type getters
   bool get isWifi => _connectivityResult == ConnectivityResult.wifi;
   bool get isMobile => _connectivityResult == ConnectivityResult.mobile;
   bool get isEthernet => _connectivityResult == ConnectivityResult.ethernet;
 
   Future<void> initialize() async {
-    // Dastlabki holatni tekshirish
-    await _checkInitialConnection();
-    
-    // Connectivity o'zgarishlarini kuzatish
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      _onConnectivityChanged,
-    );
-    
-    // Internet access o'zgarishlarini kuzatish
-    _internetSubscription = _internetChecker.onStatusChange.listen(
-      _onInternetStatusChanged,
-    );
+    try {
+      // Dastlabki holatni tekshirish
+      await _checkInitialConnection();
+
+      // Connectivity o'zgarishlarini kuzatish
+      _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+        _onConnectivityChanged,
+        onError: (error) {
+          debugPrint('Connectivity subscription error: $error');
+        },
+        cancelOnError: false,
+      );
+
+      // Internet access o'zgarishlarini kuzatish
+      _internetSubscription = _internetChecker.onStatusChange.listen(
+        _onInternetStatusChanged,
+        onError: (error) {
+          debugPrint('Internet checker subscription error: $error');
+        },
+        cancelOnError: false,
+      );
+
+      debugPrint('ConnectivityService initialized successfully');
+    } catch (e) {
+      debugPrint('Error initializing ConnectivityService: $e');
+    }
   }
 
   Future<void> _checkInitialConnection() async {
     try {
       _connectivityResult = await _connectivity.checkConnectivity();
       _hasInternetAccess = await _internetChecker.hasConnection;
-      
+
       _updateConnectionStatus();
     } catch (e) {
       debugPrint('Dastlabki ulanishni tekshirishda xatolik: $e');
@@ -81,10 +96,10 @@ class ConnectivityService extends ChangeNotifier {
 
   void _updateConnectionStatus() {
     final previousStatus = _connectionStatus;
-    
+
     if (_connectivityResult == ConnectivityResult.none || !_hasInternetAccess) {
       _connectionStatus = ConnectionStatus.offline;
-      
+
       // Offline timer boshlash
       if (previousStatus == ConnectionStatus.online) {
         _startOfflineTimer();
@@ -92,12 +107,12 @@ class ConnectivityService extends ChangeNotifier {
     } else {
       _connectionStatus = ConnectionStatus.online;
       _lastOnlineTime = DateTime.now();
-      
+
       // Offline timer to'xtatish
       _stopOfflineTimer();
       _offlineDuration = Duration.zero;
     }
-    
+
     // Status o'zgargan bo'lsa, listeners ga xabar berish
     if (previousStatus != _connectionStatus) {
       debugPrint('Internet holati o\'zgardi: ${_connectionStatus.name}');
@@ -108,7 +123,7 @@ class ConnectivityService extends ChangeNotifier {
   void _startOfflineTimer() {
     _stopOfflineTimer();
     final startTime = DateTime.now();
-    
+
     _offlineTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _offlineDuration = DateTime.now().difference(startTime);
       notifyListeners();
@@ -124,11 +139,11 @@ class ConnectivityService extends ChangeNotifier {
   Future<bool> checkConnection() async {
     _connectionStatus = ConnectionStatus.checking;
     notifyListeners();
-    
+
     try {
       _connectivityResult = await _connectivity.checkConnectivity();
       _hasInternetAccess = await _internetChecker.hasConnection;
-      
+
       _updateConnectionStatus();
       return isOnline;
     } catch (e) {
@@ -186,7 +201,7 @@ class ConnectivityService extends ChangeNotifier {
   // Network quality assessment
   NetworkQuality getNetworkQuality() {
     if (!isOnline) return NetworkQuality.none;
-    
+
     if (isWifi) {
       return NetworkQuality.excellent;
     } else if (isMobile) {
@@ -200,18 +215,18 @@ class ConnectivityService extends ChangeNotifier {
   Future<bool> retryConnection({int maxRetries = 3}) async {
     for (int i = 0; i < maxRetries; i++) {
       debugPrint('Ulanishni qayta urinish: ${i + 1}/$maxRetries');
-      
+
       final isConnected = await checkConnection();
       if (isConnected) {
         return true;
       }
-      
+
       // Keyingi urinish oldidan kutish
       if (i < maxRetries - 1) {
         await Future.delayed(Duration(seconds: (i + 1) * 2));
       }
     }
-    
+
     return false;
   }
 
@@ -259,7 +274,7 @@ extension NetworkQualityExtension on NetworkQuality {
         return 'A\'lo';
     }
   }
-  
+
   String get description {
     switch (this) {
       case NetworkQuality.none:

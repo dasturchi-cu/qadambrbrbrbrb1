@@ -316,19 +316,45 @@ class ChallengeService extends ChangeNotifier {
     }
   }
 
+  StreamSubscription<QuerySnapshot>? _challengeSubscription;
+
   void startListening() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Real-time listener
-    FirebaseFirestore.instance
+    // Cancel existing subscription
+    _challengeSubscription?.cancel();
+
+    // Real-time listener with error handling
+    _challengeSubscription = FirebaseFirestore.instance
         .collection('user_challenges')
         .where('userId', isEqualTo: user.uid)
         .snapshots()
-        .listen((snapshot) {
-      debugPrint(
-          '🔄 Challenge ma\'lumotlari yangilandi: ${snapshot.docs.length} ta challenge');
-      fetchChallenges(); // Ma'lumotlarni qayta yuklash
-    });
+        .listen(
+      (snapshot) {
+        debugPrint(
+            '🔄 Challenge ma\'lumotlari yangilandi: ${snapshot.docs.length} ta challenge');
+        fetchChallenges(); // Ma'lumotlarni qayta yuklash
+      },
+      onError: (error) {
+        debugPrint('Challenge listener error: $error');
+        // Retry after 30 seconds
+        Future.delayed(const Duration(seconds: 30), () {
+          startListening();
+        });
+      },
+      cancelOnError: false,
+    );
+  }
+
+  void stopListening() {
+    _challengeSubscription?.cancel();
+    _challengeSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    stopListening();
+    super.dispose();
   }
 }

@@ -20,14 +20,19 @@ class _RankingScreenState extends State<RankingScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
 
-    // Load rankings when screen opens
+    // Start real-time rankings when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RankingService>().fetchRankings();
+      final rankingService = context.read<RankingService>();
+      rankingService.fetchRankings();
+      rankingService
+          .startRealTimeUpdates(); // Real-time yangilanishlarni boshlash
     });
   }
 
   @override
   void dispose() {
+    // Stop real-time updates when leaving screen
+    context.read<RankingService>().stopRealTimeUpdates();
     _tabController.dispose();
     super.dispose();
   }

@@ -61,17 +61,24 @@ class SyncService extends ChangeNotifier {
 
   // Barcha ma'lumotlarni sinxronlashtirish
   Future<void> syncAll() async {
-    if (_isSyncing || !_connectivityService.isOnline) return;
+    if (_isSyncing || !_connectivityService.isOnline) {
+      debugPrint(
+          'Sync skipped: isSyncing=$_isSyncing, isOnline=${_connectivityService.isOnline}');
+      return;
+    }
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      debugPrint('Sync skipped: User not logged in');
+      return;
+    }
 
     _isSyncing = true;
     _syncError = null;
     notifyListeners();
 
     try {
-      debugPrint('Sync boshlandi...');
+      debugPrint('🔄 Sync boshlandi...');
 
       // Pending items sonini hisoblash
       await _updatePendingSyncCount(user.uid);

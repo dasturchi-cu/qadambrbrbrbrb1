@@ -28,10 +28,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController = TextEditingController(text: user?.displayName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController();
+
+    // Start real-time updates for profile data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CoinService>().startRealTimeUpdates();
+    });
   }
 
   @override
   void dispose() {
+    // Stop real-time updates when leaving screen
+    context.read<CoinService>().stopRealTimeUpdates();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();

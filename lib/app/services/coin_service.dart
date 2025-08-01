@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qadam_app/app/models/achievement_model.dart';
 import 'package:qadam_app/app/models/transaction_model.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -19,6 +20,7 @@ class CoinService extends ChangeNotifier {
   bool _isInitialized = false;
   bool _showBonusSnackbar = false;
   final List<AchievementModel> _achievements = [];
+  StreamSubscription<DocumentSnapshot>? _coinSubscription;
 
   CoinService() {
     _initPrefs();
@@ -172,6 +174,7 @@ class CoinService extends ChangeNotifier {
     _coins += amount;
     await _saveCoins();
     await _saveStatsToFirestore();
+    await _syncCoinsToFirestore(); // Real-time sync
 
     // Tranzaksiya qo'shish
     await _addTransaction(
@@ -425,5 +428,72 @@ class CoinService extends ChangeNotifier {
         }
       }
     }
+  }
+
+  // Sync coins to Firestore
+  Future<void> _syncCoinsToFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'totalCoins': _coins,
+        'lastUpdated': Timestamp.now(),
+      }, SetOptions(merge: true));
+
+      debugPrint('Coins synced to Firestore: $_coins');
+    } catch (e) {
+      debugPrint('Error syncing coins to Firestore: $e');
+    }
+  }
+
+  // Real-time coin balance listener
+  void startRealTimeUpdates() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Cancel existing subscription
+    _coinSubscription?.cancel();
+
+    // Listen to user's coin balance in real-time
+    _coinSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        if (snapshot.exists) {
+          final data = snapshot.data() as Map<String, dynamic>;
+          final firestoreCoins = data['totalCoins'] ?? 0;
+
+          // Update local coins if Firestore has more recent data
+          if (firestoreCoins != _coins) {
+            _coins = firestoreCoins;
+            _saveCoins();
+            notifyListeners();
+            debugPrint('🪙 Coins updated from Firestore: $_coins');
+          }
+        }
+      },
+      onError: (error) {
+        debugPrint('Coin listener error: $error');
+        // Retry after 30 seconds
+        Future.delayed(const Duration(seconds: 30), () {
+          startRealTimeUpdates();
+        });
+      },
+      cancelOnError: false,
+    );
+  }
+
+  void stopRealTimeUpdates() {
+    _coinSubscription?.cancel();
+    _coinSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    stopRealTimeUpdates();
+    super.dispose();
   }
 }

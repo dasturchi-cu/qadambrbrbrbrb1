@@ -3,6 +3,7 @@ import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'ranking_service.dart';
 
 class StepCounterService extends ChangeNotifier {
@@ -11,7 +12,10 @@ class StepCounterService extends ChangeNotifier {
   DateTime? _lastResetDate;
   String _status = 'stopped';
   Stream<StepCount>? _stepCountStream;
+  StreamSubscription<StepCount>? _stepCountSubscription;
   late SharedPreferences _prefs;
+  Timer? _syncTimer;
+  bool _isInitialized = false;
 
   StepCounterService() {
     _initPrefs();
@@ -20,12 +24,32 @@ class StepCounterService extends ChangeNotifier {
   int get steps => _steps;
   int get dailyGoal => _dailyGoal;
   String get status => _status;
+  bool get isInitialized => _isInitialized;
 
   Future<void> _initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-    _loadSteps();
-    _loadGoal();
-    _checkForDailyReset();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      await _loadSteps();
+      await _loadGoal();
+      await _checkForDailyReset();
+      _isInitialized = true;
+      _startSyncTimer();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error initializing StepCounterService: $e');
+      _status = 'error: $e';
+      notifyListeners();
+    }
+  }
+
+  void _startSyncTimer() {
+    _syncTimer?.cancel();
+    // Sync every 30 seconds instead of every step
+    _syncTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (_isInitialized) {
+        syncStepsWithFirestore();
+      }
+    });
   }
 
   Future<void> _loadSteps() async {
@@ -79,33 +103,73 @@ class StepCounterService extends ChangeNotifier {
   }
 
   void startCounting() {
+    if (!_isInitialized) {
+      debugPrint('StepCounterService not initialized yet');
+      return;
+    }
     _setupPedometer();
     _status = 'counting';
     notifyListeners();
   }
 
   void stopCounting() {
+    _stepCountSubscription?.cancel();
+    _stepCountSubscription = null;
     _status = 'stopped';
     notifyListeners();
   }
 
   void _setupPedometer() {
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream?.listen(_onStepCount).onError(_onStepCountError);
+    try {
+      // Cancel existing subscription
+      _stepCountSubscription?.cancel();
+
+      _stepCountStream = Pedometer.stepCountStream;
+      _stepCountSubscription = _stepCountStream?.listen(
+        _onStepCount,
+        onError: _onStepCountError,
+        cancelOnError: false,
+      );
+    } catch (e) {
+      debugPrint('Error setting up pedometer: $e');
+      _status = 'error: $e';
+      notifyListeners();
+    }
   }
 
   void _onStepCount(StepCount event) async {
-    _steps = event.steps;
-    _saveSteps();
-    syncStepsWithFirestore();
-    await _updateAllChallengeProgress();
-    await _updateRankings();
-    notifyListeners();
+    try {
+      final newSteps = event.steps;
+      if (newSteps != _steps) {
+        _steps = newSteps;
+        await _saveSteps();
+
+        // Only update challenges and rankings periodically, not on every step
+        if (_steps % 100 == 0) {
+          // Every 100 steps
+          await _updateAllChallengeProgress();
+          await _updateRankings();
+        }
+
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error processing step count: $e');
+    }
   }
 
   void _onStepCountError(error) {
     _status = 'error: $error';
     debugPrint('Step counter error: $error');
+
+    // Try to restart pedometer after error
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_status.contains('error')) {
+        debugPrint('Attempting to restart pedometer...');
+        _setupPedometer();
+      }
+    });
+
     notifyListeners();
   }
 
@@ -113,8 +177,7 @@ class StepCounterService extends ChangeNotifier {
   void addSteps(int count) {
     _steps += count;
     _saveSteps();
-    syncStepsWithFirestore();
-    _updateRankings();
+    // Don't sync immediately, let timer handle it
     notifyListeners();
   }
 
@@ -136,32 +199,44 @@ class StepCounterService extends ChangeNotifier {
 
   // Sinxronizatsiya: lokal qadamlarni Firestore bilan bir xil qilish
   Future<void> syncStepsWithFirestore() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final userDoc =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final statsDoc = userDoc
-        .collection('stats')
-        .doc(DateTime.now().toIso8601String().substring(0, 10));
-    // Firestore'dan mavjud qadamlarni olish
-    final snapshot = await statsDoc.get();
-    int firestoreSteps = 0;
-    if (snapshot.exists) {
-      firestoreSteps = snapshot.data()?['steps'] ?? 0;
-    }
-    // Agar lokal qadamlar ko'proq bo'lsa, Firestore'ga yozamiz
-    if (_steps > firestoreSteps) {
-      await statsDoc.set({
-        'day': DateTime.now().weekday,
-        'steps': _steps,
-        'coins': 0, // coins logikasi CoinService'da
-        'date': DateTime.now(),
-      }, SetOptions(merge: true));
-    } else if (firestoreSteps > _steps) {
-      // Agar Firestore ko'proq bo'lsa, lokalga yozamiz
-      _steps = firestoreSteps;
-      await _saveSteps();
-      notifyListeners();
+    if (!_isInitialized) return;
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final userDoc =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final statsDoc = userDoc.collection('stats').doc(today);
+
+      // Firestore'dan mavjud qadamlarni olish
+      final snapshot = await statsDoc.get();
+      int firestoreSteps = 0;
+      if (snapshot.exists) {
+        firestoreSteps = snapshot.data()?['steps'] ?? 0;
+      }
+
+      // Agar lokal qadamlar ko'proq bo'lsa, Firestore'ga yozamiz
+      if (_steps > firestoreSteps) {
+        await statsDoc.set({
+          'day': DateTime.now().weekday,
+          'steps': _steps,
+          'coins': 0, // coins logikasi CoinService'da
+          'date': Timestamp.now(),
+          'lastUpdated': Timestamp.now(),
+        }, SetOptions(merge: true));
+
+        debugPrint('Steps synced to Firestore: $_steps');
+      } else if (firestoreSteps > _steps) {
+        // Agar Firestore ko'proq bo'lsa, lokalga yozamiz
+        _steps = firestoreSteps;
+        await _saveSteps();
+        notifyListeners();
+        debugPrint('Steps synced from Firestore: $_steps');
+      }
+    } catch (e) {
+      debugPrint('Error syncing steps with Firestore: $e');
     }
   }
 
@@ -195,5 +270,12 @@ class StepCounterService extends ChangeNotifier {
       return doc.data()?['targetSteps'] ?? 0;
     }
     return 0;
+  }
+
+  @override
+  void dispose() {
+    _stepCountSubscription?.cancel();
+    _syncTimer?.cancel();
+    super.dispose();
   }
 }
