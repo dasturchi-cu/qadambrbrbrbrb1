@@ -97,10 +97,22 @@ class RankingService extends ChangeNotifier {
   void startRealTimeUpdates() {
     _rankingSubscription?.cancel();
     _rankingSubscription =
-        _firebaseRankingService.streamGlobalRankings().listen((rankings) {
-      _rankings = rankings;
-      notifyListeners();
-    });
+        _firebaseRankingService.streamGlobalRankings().listen(
+      (rankings) {
+        _rankings = rankings;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('Ranking stream error: $error');
+        // Retry after 30 seconds
+        Future.delayed(const Duration(seconds: 30), () {
+          if (_rankingSubscription == null) {
+            startRealTimeUpdates();
+          }
+        });
+      },
+      cancelOnError: false,
+    );
   }
 
   /// Stop real-time updates

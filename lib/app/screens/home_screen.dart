@@ -9,7 +9,7 @@ import 'package:qadam_app/app/services/step_counter_service.dart'
 import 'package:qadam_app/app/services/coin_service.dart';
 import 'package:qadam_app/app/screens/coin_wallet_screen.dart';
 import 'package:qadam_app/app/screens/challenge_screen.dart';
-import 'package:qadam_app/app/screens/statistics_screen.dart' hide BoxShadow;
+import 'statistics_screen.dart';
 import 'package:qadam_app/app/screens/referral_screen.dart';
 import 'package:qadam_app/app/screens/profile_screen.dart';
 import 'package:qadam_app/app/screens/settings_screen.dart';
@@ -23,6 +23,12 @@ import 'package:qadam_app/app/screens/support_history_screen.dart';
 import 'package:qadam_app/app/models/challenge_model.dart';
 import 'package:qadam_app/app/services/challenge_service.dart';
 import 'package:qadam_app/app/screens/shop_screen.dart';
+import 'package:qadam_app/app/utils/auto_firebase_setup.dart';
+import 'package:qadam_app/app/services/active_user_service.dart';
+import 'package:qadam_app/app/services/dynamic_ranking_service.dart';
+import 'package:qadam_app/app/services/weekly_bonus_service.dart';
+import 'package:qadam_app/app/services/daily_bonus_service.dart';
+import 'package:qadam_app/app/services/progressive_login_streak_service.dart';
 
 import '../ad_helper.dart';
 import '../services/auth_service.dart';
@@ -144,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -302,14 +308,14 @@ class _HomeScreenState extends State<HomeScreen> {
               gradient: LinearGradient(
                 colors: [
                   Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.8),
+                  Theme.of(context).primaryColor.withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -324,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Menu button
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: IconButton(
@@ -381,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -415,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
@@ -456,6 +462,110 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(width: 8),
+
+                    // 🔥 FIREBASE SETUP TUGMASI
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.rocket_launch,
+                            color: Colors.white),
+                        onPressed: () async {
+                          if (!mounted) return;
+
+                          // Show loading dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const AlertDialog(
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text(
+                                      '🔥 Firebase Collections yaratilmoqda...'),
+                                ],
+                              ),
+                            ),
+                          );
+
+                          try {
+                            // Run Firebase setup
+                            await AutoFirebaseSetup.setupEverything();
+
+                            // Initialize all real-time services
+                            await Future.wait([
+                              context.read<ActiveUserService>().initialize(),
+                              context
+                                  .read<DynamicRankingService>()
+                                  .initialize(),
+                              context.read<WeeklyBonusService>().initialize(),
+                              context.read<DailyBonusService>().initialize(),
+                              context
+                                  .read<ProgressiveLoginStreakService>()
+                                  .initialize(),
+                            ]);
+
+                            if (!mounted) return;
+                            Navigator.of(context).pop(); // Close loading dialog
+
+                            // Show success dialog
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('✅ Muvaffaqiyat!'),
+                                content: const Text(
+                                    '🔥 Barcha Firebase Collections yaratildi!\n'
+                                    '🏆 Ranking System tayyor!\n'
+                                    '💰 Sample data qo\'shildi!\n\n'
+                                    'Endi Reyting sahifasiga o\'ting va test qiling!'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('OK'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const RankingScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('🏆 Reytingga o\'tish'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            Navigator.of(context).pop(); // Close loading dialog
+
+                            // Show error dialog
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('❌ Xatolik'),
+                                content: Text('Firebase setup xatoligi: $e'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),

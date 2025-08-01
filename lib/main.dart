@@ -35,6 +35,11 @@ import 'package:qadam_app/app/services/connectivity_service.dart';
 import 'package:qadam_app/app/services/sync_service.dart';
 import 'package:qadam_app/app/services/offline_game_service.dart';
 import 'package:qadam_app/app/utils/firebase_setup.dart';
+import 'package:qadam_app/app/services/active_user_service.dart';
+import 'package:qadam_app/app/services/weekly_bonus_service.dart';
+import 'package:qadam_app/app/services/daily_bonus_service.dart';
+import 'package:qadam_app/app/services/dynamic_ranking_service.dart';
+import 'package:qadam_app/app/services/progressive_login_streak_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -109,6 +114,11 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ConnectivityService()),
         ChangeNotifierProvider(create: (_) => SyncService()),
         ChangeNotifierProvider(create: (_) => OfflineGameService()),
+        ChangeNotifierProvider(create: (_) => ActiveUserService()),
+        ChangeNotifierProvider(create: (_) => WeeklyBonusService()),
+        ChangeNotifierProvider(create: (_) => DailyBonusService()),
+        ChangeNotifierProvider(create: (_) => DynamicRankingService()),
+        ChangeNotifierProvider(create: (_) => ProgressiveLoginStreakService()),
       ],
       child: const QadamApp(),
     ),
@@ -131,20 +141,45 @@ class _QadamAppState extends State<QadamApp> {
   void initState() {
     super.initState();
     _handleInitialDynamicLink();
+    _initializeServices();
+  }
+
+  /// Initialize all real-time services
+  Future<void> _initializeServices() async {
+    try {
+      // Initialize services in correct order
+      await Future.wait([
+        context.read<ActiveUserService>().initialize(),
+        context.read<DynamicRankingService>().initialize(),
+        context.read<WeeklyBonusService>().initialize(),
+        context.read<DailyBonusService>().initialize(),
+        context.read<ProgressiveLoginStreakService>().initialize(),
+      ]);
+
+      debugPrint('✅ All real-time services initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Error initializing services: $e');
+    }
   }
 
   Future<void> _handleInitialDynamicLink() async {
-    final PendingDynamicLinkData? data =
-        await FirebaseDynamicLinks.instance.getInitialLink();
-    final Uri? deepLink = data?.link;
-    if (deepLink != null && deepLink.pathSegments.contains('ref')) {
-      final referralCode = deepLink.pathSegments.last;
-      // Use navigatorKey to push RegisterScreen
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (_) => RegisterScreen(referralCode: referralCode),
-        ),
-      );
+    try {
+      final PendingDynamicLinkData? data =
+          await FirebaseDynamicLinks.instance.getInitialLink();
+      final Uri? deepLink = data?.link;
+      if (deepLink != null && deepLink.pathSegments.contains('ref')) {
+        final referralCode = deepLink.pathSegments.last;
+        // Navigate to register screen with referral code
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RegisterScreen(referralCode: referralCode),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Dynamic Links error: $e');
     }
   }
 
@@ -170,39 +205,62 @@ class _QadamAppState extends State<QadamApp> {
 
     // Servicelarni initialize qilish
     if (authService.isLoggedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final coinService = Provider.of<CoinService>(context, listen: false);
-        final achievementService =
-            Provider.of<AchievementService>(context, listen: false);
-        final levelService = Provider.of<LevelService>(context, listen: false);
-        final notificationService =
-            Provider.of<NotificationService>(context, listen: false);
-        final friendsService =
-            Provider.of<FriendsService>(context, listen: false);
-        final themeService = Provider.of<ThemeService>(context, listen: false);
-        final localizationService =
-            Provider.of<LocalizationService>(context, listen: false);
-        final connectivityService =
-            Provider.of<ConnectivityService>(context, listen: false);
-        final syncService = Provider.of<SyncService>(context, listen: false);
-        final offlineGameService =
-            Provider.of<OfflineGameService>(context, listen: false);
-        final rankingService =
-            Provider.of<RankingService>(context, listen: false);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
 
-        // Servicelarni initialize qilish
-        coinService.initialize();
-        coinService.checkDailyLoginBonus();
-        achievementService.initialize();
-        levelService.initialize();
-        notificationService.initialize();
-        friendsService.initialize();
-        themeService.initialize();
-        localizationService.initialize();
-        connectivityService.initialize();
-        syncService.initialize();
-        offlineGameService.initialize();
-        rankingService.initialize();
+        try {
+          // Get all services first to avoid context issues
+          final connectivityService =
+              Provider.of<ConnectivityService>(context, listen: false);
+          final syncService = Provider.of<SyncService>(context, listen: false);
+          final coinService = Provider.of<CoinService>(context, listen: false);
+          final achievementService =
+              Provider.of<AchievementService>(context, listen: false);
+          final levelService =
+              Provider.of<LevelService>(context, listen: false);
+          final notificationService =
+              Provider.of<NotificationService>(context, listen: false);
+          final friendsService =
+              Provider.of<FriendsService>(context, listen: false);
+          final themeService =
+              Provider.of<ThemeService>(context, listen: false);
+          final localizationService =
+              Provider.of<LocalizationService>(context, listen: false);
+          final offlineGameService =
+              Provider.of<OfflineGameService>(context, listen: false);
+          final rankingService =
+              Provider.of<RankingService>(context, listen: false);
+
+          // Critical services first
+          await connectivityService.initialize();
+          await syncService.initialize();
+
+          // Initialize services in batches to avoid blocking UI
+          await Future.wait([
+            coinService.initialize(),
+            themeService.initialize(),
+            localizationService.initialize(),
+          ]);
+
+          await Future.wait([
+            achievementService.initialize(),
+            levelService.initialize(),
+            notificationService.initialize(),
+          ]);
+
+          await Future.wait([
+            friendsService.initialize(),
+            offlineGameService.initialize(),
+            rankingService.initialize(),
+          ]);
+
+          // Check daily bonus after all services are initialized
+          coinService.checkDailyLoginBonus();
+
+          debugPrint('✅ All services initialized successfully');
+        } catch (e) {
+          debugPrint('❌ Error initializing services: $e');
+        }
       });
     }
 

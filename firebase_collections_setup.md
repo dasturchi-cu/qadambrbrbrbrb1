@@ -1,8 +1,11 @@
-# 🔥 FIREBASE COLLECTIONS SETUP GUIDE
+# 🔥 REAL-TIME COMPETITIVE RANKING SYSTEM
+
+## 🎯 **MAQSAD:**
+Faqat haqiqiy qadam bosayotgan va faol foydalanuvchilar reytingda ko'rinadi. Avtomatik haftalik mukofotlar taqsimlanadi va real-time raqobat yaratiladi!
 
 ## 📋 **FIREBASE COLLECTIONS YARATISH KERAK:**
 
-### 1. **users** Collection
+### 1. **** Collection
 ```javascript
 // Document ID: userId (auto-generated yoki custom)
 {
@@ -58,18 +61,70 @@
 }
 ```
 
-### 5. **ranking_rewards** Collection
+### 5. **active_users** Collection (YANGI!)
+```javascript
+// Document ID: userId
+{
+  "userId": "sample_user_0",
+  "lastSeen": 1704067200000,
+  "isActive": true,
+  "lastStepUpdate": 1704067200000,
+  "currentSteps": 15000,
+  "realStepsDetected": true
+}
+```
+
+### 6. **weekly_rewards_history** Collection (YANGI!)
+```javascript
+// Document ID: auto-generated
+{
+  "weekStart": 1704067200000,
+  "weekEnd": 1704067800000,
+  "distributedAt": 1704067800000,
+  "totalActiveUsers": 25,
+  "rewardedUsers": [
+    {
+      "userId": "sample_user_0",
+      "name": "Sardor Umarov",
+      "position": 1,
+      "reward": 200,
+      "totalSteps": 22000
+    }
+  ],
+  "totalCoinsDistributed": 350
+}
+```
+
+### 7. **daily_bonuses** Collection (YANGI!)
 ```javascript
 // Document ID: auto-generated
 {
   "userId": "sample_user_0",
+  "amount": 25,
+  "date": 1704067200000,
+  "streakDays": 5,
+  "rankingBonus": 10,
+  "weeklyPosition": 1,
+  "createdAt": 1704067200000
+}
+```
+
+### 8. **coin_transactions** Collection (YANGI!)
+```javascript
+// Document ID: auto-generated
+{
+  "userId": "sample_user_0",
+  "amount": 200,
+  "type": "weekly_ranking_reward",
+  "description": "Haftalik reyting mukofoti - 1-o'rin",
   "position": 1,
-  "coins": 200,
-  "title": "Birinchi o'rin",
-  "emoji": "🥇",
-  "type": "weekly",
+  "weekStart": 1704067200000,
   "createdAt": 1704067200000,
-  "weekStart": 1704067200000
+  "metadata": {
+    "totalSteps": 22000,
+    "weeklySteps": 5000,
+    "rank": 1
+  }
 }
 ```
 

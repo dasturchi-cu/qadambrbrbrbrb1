@@ -25,7 +25,7 @@ class SupportService extends ChangeNotifier {
       _unreadTicketsCount = query.docs.length;
       notifyListeners();
     } catch (e) {
-      print('Unread tickets count fetch error: $e');
+      debugPrint('Unread tickets count fetch error: $e');
     }
   }
 
@@ -65,7 +65,7 @@ class SupportService extends ChangeNotifier {
 
       return docRef.id;
     } catch (e) {
-      print('Create ticket error: $e');
+      debugPrint('Create ticket error: $e');
       return null;
     }
   }
@@ -99,7 +99,7 @@ class SupportService extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      print('Send message error: $e');
+      debugPrint('Send message error: $e');
       return false;
     }
   }
@@ -113,7 +113,7 @@ class SupportService extends ChangeNotifier {
 
       await fetchUnreadTicketsCount();
     } catch (e) {
-      print('Mark as read error: $e');
+      debugPrint('Mark as read error: $e');
     }
   }
 
@@ -126,7 +126,7 @@ class SupportService extends ChangeNotifier {
       });
       return true;
     } catch (e) {
-      print('Close ticket error: $e');
+      debugPrint('Close ticket error: $e');
       return false;
     }
   }
@@ -154,7 +154,7 @@ class SupportService extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      print('Rate support error: $e');
+      debugPrint('Rate support error: $e');
       return false;
     }
   }

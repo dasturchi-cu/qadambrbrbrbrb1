@@ -8,6 +8,7 @@ import 'package:qadam_app/app/screens/forgot_password_screen.dart';
 import 'package:qadam_app/app/components/loading_widget.dart';
 import 'package:qadam_app/app/components/error_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:qadam_app/app/services/progressive_login_streak_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? referralCode;
@@ -702,12 +703,24 @@ class _LoginScreenState extends State<LoginScreen>
 
     HapticFeedback.mediumImpact();
 
+    debugPrint('🔐 Login attempt: ${_emailController.text.trim()}');
+
     final success = await authService.signInWithEmail(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
 
+    debugPrint('🔐 Login result: $success');
+    if (!success) {
+      debugPrint('❌ Login error: ${authService.errorMessage}');
+    }
+
     if (success && mounted) {
+      // Update progressive login streak
+      final progressiveStreakService =
+          Provider.of<ProgressiveLoginStreakService>(context, listen: false);
+      await progressiveStreakService.triggerLoginStreak();
+
       HapticFeedback.lightImpact();
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
@@ -730,6 +743,11 @@ class _LoginScreenState extends State<LoginScreen>
     final success = await authService.signInWithGoogle();
 
     if (success && mounted) {
+      // Update progressive login streak
+      final progressiveStreakService =
+          Provider.of<ProgressiveLoginStreakService>(context, listen: false);
+      await progressiveStreakService.triggerLoginStreak();
+
       HapticFeedback.lightImpact();
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(

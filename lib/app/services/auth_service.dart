@@ -56,6 +56,9 @@ class AuthService extends ChangeNotifier {
       if (result.user != null) {
         await saveFcmTokenToFirestore(result.user!.uid);
 
+        // User ni darhol active qilish
+        await _markUserAsActive(result.user!.uid);
+
         // Referral code bo'lsa, referral tizimini ishlatish
         if (referralCode != null && referralCode.isNotEmpty) {
           await _processReferral(result.user!.uid, referralCode);
@@ -93,12 +96,12 @@ class AuthService extends ChangeNotifier {
 
       // Referral code dan foydalanuvchi ID ni olish
       final referrerId =
-      await referralService.getUserIdFromReferralCode(referralCode);
+          await referralService.getUserIdFromReferralCode(referralCode);
 
       if (referrerId != null) {
         // Referral qo'shish
         final success =
-        await referralService.addReferral(referrerId, newUserId);
+            await referralService.addReferral(referrerId, newUserId);
 
         if (success) {
           print(
@@ -118,15 +121,22 @@ class AuthService extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    debugPrint('🔐 AuthService: Attempting login for $email');
+
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
+
+      debugPrint('✅ AuthService: Login successful for ${result.user?.uid}');
 
       // User ma'lumotlarini localStorage ga saqlash
       await _saveUserData(result.user);
       // FCM tokenni Firestore'ga saqlash
       if (result.user != null) {
         await saveFcmTokenToFirestore(result.user!.uid);
+
+        // User ni darhol active qilish
+        await _markUserAsActive(result.user!.uid);
       }
 
       _isLoading = false;
@@ -135,12 +145,21 @@ class AuthService extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
 
+      debugPrint(
+          '❌ AuthService: Firebase auth error: ${e.code} - ${e.message}');
+
       if (e.code == 'user-not-found') {
-        _errorMessage = 'Bu email topilmadi';
+        _errorMessage = 'Bu email bilan ro\'yxatdan o\'tilmagan';
       } else if (e.code == 'wrong-password') {
-        _errorMessage = 'Noto\'g\'ri parol';
+        _errorMessage = 'Noto\'g\'ri parol kiritildi';
+      } else if (e.code == 'invalid-email') {
+        _errorMessage = 'Email formati noto\'g\'ri';
+      } else if (e.code == 'user-disabled') {
+        _errorMessage = 'Bu akkaunt bloklangan';
+      } else if (e.code == 'too-many-requests') {
+        _errorMessage = 'Juda ko\'p urinish. Keyinroq qayta urinib ko\'ring';
       } else {
-        _errorMessage = e.message;
+        _errorMessage = e.message ?? 'Login xatoligi yuz berdi';
       }
 
       notifyListeners();
@@ -168,7 +187,8 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -182,6 +202,9 @@ class AuthService extends ChangeNotifier {
       if (result.user != null) {
         await _saveUserData(result.user!);
         await saveFcmTokenToFirestore(result.user!.uid);
+
+        // User ni darhol active qilish
+        await _markUserAsActive(result.user!.uid);
       }
 
       _isLoading = false;
@@ -250,17 +273,77 @@ class AuthService extends ChangeNotifier {
       await prefs.setString('user_name', user.displayName ?? '');
       await prefs.setString('user_email', user.email ?? '');
 
-      // Firestore ga saqlash
+      // Firestore ga to'liq user ma'lumotlarini saqlash
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'uid': user.uid,
         'email': user.email,
-        'name': user.displayName,
+        'name': user.displayName ?? 'User',
         'photoURL': user.photoURL,
         'lastLogin': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
         'coins': 0, // Default coins
+        'totalSteps': 0, // Default steps
+        'todaySteps': 0, // Today's steps
+        'isActive': true, // Active user
+        'lastSeen': FieldValue.serverTimestamp(),
+        'level': 1, // Default level
+        'experience': 0, // Default experience
+        'achievements': [], // Empty achievements
+        'friends': [], // Empty friends list
+        'loginStreak': 0, // Login streak
+        'lastLoginDate': FieldValue.serverTimestamp(),
+        'weeklySteps': 0, // Weekly steps
+        'monthlySteps': 0, // Monthly steps
+        'realStepsDetected': false, // Real steps detection
       }, SetOptions(merge: true));
+
+      // Active users collection ga ham qo'shish
+      await FirebaseFirestore.instance
+          .collection('active_users')
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'name': user.displayName ?? 'User',
+        'email': user.email,
+        'photoURL': user.photoURL,
+        'isActive': true,
+        'lastSeen': FieldValue.serverTimestamp(),
+        'totalSteps': 0,
+        'todaySteps': 0,
+        'realStepsDetected': false,
+        'joinedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint('✅ User successfully created in Firestore: ${user.uid}');
     } catch (e) {
-      print('User ma\'lumotlarini saqlashda xatolik: $e');
+      debugPrint('❌ User ma\'lumotlarini saqlashda xatolik: $e');
       _errorMessage = e.toString();
+    }
+  }
+
+  /// Mark user as active immediately after login
+  Future<void> _markUserAsActive(String userId) async {
+    try {
+      final now = DateTime.now();
+
+      // Update active_users collection
+      await FirebaseFirestore.instance
+          .collection('active_users')
+          .doc(userId)
+          .set({
+        'uid': userId,
+        'userId': userId,
+        'isActive': true,
+        'lastSeen': now.millisecondsSinceEpoch,
+        'lastStepUpdate': now.millisecondsSinceEpoch,
+        'currentSteps': 0,
+        'realStepsDetected': false,
+        'joinedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint('✅ User marked as active: $userId');
+    } catch (e) {
+      debugPrint('❌ Error marking user as active: $e');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/ranking_model.dart';
+import 'active_user_service.dart';
 
 class FirebaseRankingService {
   static final FirebaseRankingService _instance =
@@ -9,6 +10,7 @@ class FirebaseRankingService {
   FirebaseRankingService._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ActiveUserService _activeUserService = ActiveUserService();
 
   // Collection references
   CollectionReference get _usersCollection => _firestore.collection('users');
@@ -72,30 +74,43 @@ class FirebaseRankingService {
     }
   }
 
-  /// Get global rankings (top 50)
+  /// Get global rankings (top 50) - Only active users with real steps
   Future<List<RankingModel>> getGlobalRankings({int limit = 50}) async {
     try {
-      final snapshot = await _usersCollection
-          .orderBy('totalSteps', descending: true)
-          .limit(limit)
-          .get();
+      // Get active users with real step data
+      final activeUsersData =
+          await _activeUserService.getActiveUsersWithSteps();
+
+      if (activeUsersData.isEmpty) {
+        debugPrint('⚠️ No active users found for rankings');
+        return [];
+      }
 
       final rankings = <RankingModel>[];
       int rank = 1;
 
-      for (final doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+      // Take only the top users up to the limit
+      final topUsers = activeUsersData.take(limit);
+
+      for (final userData in topUsers) {
         final rankingData = {
-          'userId': doc.id,
-          ...data,
+          'userId': userData['userId'],
+          'name': userData['name'],
+          'totalSteps': userData['totalSteps'],
+          'photoUrl': userData['photoUrl'],
+          'level': userData['level'],
+          'totalCoins': userData['totalCoins'],
+          'isCurrentUser': false,
         };
+
         rankings.add(RankingModel.fromMap(rankingData, rank));
         rank++;
       }
 
+      debugPrint('✅ Loaded ${rankings.length} active users in global rankings');
       return rankings;
     } catch (e) {
-      debugPrint('Error getting global rankings: $e');
+      debugPrint('❌ Error getting global rankings: $e');
       return [];
     }
   }
