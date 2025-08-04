@@ -41,9 +41,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           Provider.of<StepCounterService>(context, listen: false);
 
       challengeService.fetchChallenges();
-      challengeService.startListening(); // Real-time listener boshlash
       _updateChallengeProgress();
-      _autoCreateChallenges(); // Avtomatik challenge yaratish
     });
   }
 
@@ -63,8 +61,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   @override
   void dispose() {
-    // Stop real-time listener when leaving screen
-    context.read<ChallengeService>().stopListening();
     _tabController.dispose();
     _confettiController.dispose();
     super.dispose();
@@ -805,10 +801,3 @@ Widget _buildCompletedChallengeCard(
     ),
   );
 }
-
-  // Avtomatik challenge yaratish - sodda versiya
-  Future<void> _autoCreateChallenges() async {
-    debugPrint('🎯 Avtomatik challenge yaratish boshlandi');
-    // Hozircha faqat log, keyinroq to'liq implement qilamiz
-  }
-

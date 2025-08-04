@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/ranking_service.dart';
-import '../services/active_user_service.dart';
-import '../services/weekly_bonus_service.dart';
-import '../services/dynamic_ranking_service.dart';
 import '../models/ranking_model.dart';
-import '../widgets/enhanced_podium_widget.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({Key? key}) : super(key: key);
@@ -24,23 +20,14 @@ class _RankingScreenState extends State<RankingScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
 
-    // Start real-time rankings when screen opens
+    // Load rankings when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rankingService = context.read<RankingService>();
-      final dynamicRankingService = context.read<DynamicRankingService>();
-
-      rankingService.fetchRankings();
-      rankingService.startRealTimeUpdates();
-
-      // Initialize dynamic ranking for real-time active users
-      dynamicRankingService.initialize();
+      context.read<RankingService>().fetchRankings();
     });
   }
 
   @override
   void dispose() {
-    // Stop real-time updates when leaving screen
-    context.read<RankingService>().stopRealTimeUpdates();
     _tabController.dispose();
     super.dispose();
   }
@@ -50,24 +37,9 @@ class _RankingScreenState extends State<RankingScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '🏆 Reyting',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            StreamBuilder<int>(
-              stream: context.read<ActiveUserService>().activeUsersCountStream,
-              builder: (context, snapshot) {
-                final activeCount = snapshot.data ?? 0;
-                return Text(
-                  '🟢 $activeCount faol foydalanuvchi',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                );
-              },
-            ),
-          ],
+        title: const Text(
+          '🏆 Reyting',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -97,22 +69,13 @@ class _RankingScreenState extends State<RankingScreen>
   }
 
   Widget _buildGlobalRanking() {
-    return Consumer<DynamicRankingService>(
-      builder: (context, dynamicRankingService, child) {
-        if (dynamicRankingService.isLoading) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Faol foydalanuvchilar yuklanmoqda...'),
-              ],
-            ),
-          );
+    return Consumer<RankingService>(
+      builder: (context, rankingService, child) {
+        if (rankingService.isLoading) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        if (dynamicRankingService.error != null) {
+        if (rankingService.error != null) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -122,13 +85,12 @@ class _RankingScreenState extends State<RankingScreen>
                 Text('Xatolik yuz berdi',
                     style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 8),
-                Text(dynamicRankingService.error!,
+                Text(rankingService.error!,
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () =>
-                      dynamicRankingService.refreshActiveRankings(),
+                  onPressed: () => rankingService.fetchRankings(),
                   child: const Text('Qayta urinish'),
                 ),
               ],
@@ -136,224 +98,43 @@ class _RankingScreenState extends State<RankingScreen>
           );
         }
 
-        final activeRankings = dynamicRankingService.activeRankings;
-        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-        if (activeRankings.isEmpty) {
-          return Center(
+        final rankings = rankingService.rankings;
+        if (rankings.isEmpty) {
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.people_outline, size: 64, color: Colors.grey),
-                const SizedBox(height: 16),
-                const Text(
-                  'Hozirda faol foydalanuvchilar yo\'q',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Qadam bosishni boshlang va birinchi bo\'ling!',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () =>
-                      dynamicRankingService.refreshActiveRankings(),
-                  child: const Text('Yangilash'),
-                ),
+                Icon(Icons.leaderboard_outlined, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('Hali reyting yo\'q',
+                    style: TextStyle(fontSize: 18, color: Colors.grey)),
               ],
             ),
           );
         }
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              // Competition status
-              Container(
-                margin: const EdgeInsets.all(16),
+        return Column(
+          children: [
+            // Top 3 podium
+            _buildPodium(rankings.take(3).toList()),
+
+            // Current user position (if not in top 3)
+            _buildCurrentUserCard(rankings),
+
+            // Rest of the rankings
+            Expanded(
+              child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                      Theme.of(context).primaryColor.withValues(alpha: 0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color:
-                        Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '🏆 JONLI RAQOBAT',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      dynamicRankingService.getCompetitionStatus(),
-                      style: const TextStyle(fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                itemCount: rankings.length,
+                itemBuilder: (context, index) {
+                  final ranking = rankings[index];
+                  return _buildRankingCard(ranking, index + 1);
+                },
               ),
-
-              // Enhanced Podium Widget
-              EnhancedPodiumWidget(
-                activeUsers: activeRankings,
-                currentUserId: currentUserId,
-              ),
-
-              // Competition info for current user
-              if (currentUserId != null)
-                _buildCompetitionInfo(dynamicRankingService, currentUserId),
-
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         );
       },
-    );
-  }
-
-  /// Build competition info for current user
-  Widget _buildCompetitionInfo(
-      DynamicRankingService dynamicRankingService, String currentUserId) {
-    final nextCompetitor = dynamicRankingService.getNextCompetitor();
-    final follower = dynamicRankingService.getFollowerInfo();
-    final currentPosition = dynamicRankingService.getCurrentUserPosition();
-
-    if (currentPosition == null) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.person, color: Colors.blue[700]),
-              const SizedBox(width: 8),
-              Text(
-                'Sizning pozitsiyangiz',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Current position
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      currentPosition.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$currentPosition-o\'rin',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Next competitor info
-          if (nextCompetitor != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange[200]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.keyboard_arrow_up, color: Colors.orange[700]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      nextCompetitor['message'],
-                      style: TextStyle(
-                        color: Colors.orange[700],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // Follower info
-          if (follower != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.keyboard_arrow_down, color: Colors.green[700]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      follower['message'],
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
